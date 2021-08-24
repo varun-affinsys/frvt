@@ -25,6 +25,7 @@ do
 done
 echo "[SUCCESS]"
 
+
 # Compile and build implementation library against
 # validation test driver
 scripts/compile_and_link.sh
@@ -32,6 +33,9 @@ retcode=$?
 if [[ $retcode != 0 ]]; then
 	exit $failure
 fi
+
+# Set dynamic library path to the folder location of the developer's submission library
+export LD_LIBRARY_PATH=$(pwd)/lib
 
 # Run testdriver against linked library
 # and validation images
