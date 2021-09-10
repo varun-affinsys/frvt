@@ -22,6 +22,10 @@ do
 	if [[ $retcode != 0 ]]; then
 		sudo yum install -y $package
 	fi
+    # Need a later version to support cmake for now
+    if [ "$package" == "libarchive" ]; then
+        sudo yum update -y $package
+    fi
 done
 echo "[SUCCESS]"
 
