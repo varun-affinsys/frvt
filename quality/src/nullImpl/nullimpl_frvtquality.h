@@ -28,14 +28,14 @@ public:
 
     FRVT::ReturnStatus
     scalarQuality(
-		const FRVT::Image &face,
-		double &quality) override;
+	const FRVT::Image &face,
+	double &quality) override;
 
     FRVT::ReturnStatus
     vectorQuality(
         const FRVT::Image &face,
         std::vector<FRVT::QualityElementValues> &qualityVector,
-		std::vector<FRVT::EyePair> &eyeCoordinates) override;
+	std::vector<FRVT::EyePair> &eyeCoordinates) override;
 
     static std::shared_ptr<FRVT_QUALITY::Interface>
     getImplementation();
