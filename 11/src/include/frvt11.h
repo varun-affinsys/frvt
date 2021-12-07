@@ -58,16 +58,16 @@ public:
      * internally encode "template creation failed" and the matcher must
      * transparently handle this.
      *
-     * param[in] faces
+     * @param[in] faces
      * Implementations must alter their behavior according to the number of
      * images contained in the structure and the TemplateRole type.
-     * param[in] role
+     * @param[in] role
      * Label describing the type/role of the template to be generated
-     * param[out] templ
+     * @param[out] templ
      * The output template.  The format is entirely unregulated.  This will be
      * an empty vector when passed into the function, and the implementation
      * can resize and populate it with the appropriate data.
-     * param[out] eyeCoordinates
+     * @param[out] eyeCoordinates
      * For each input image in the Multiface, the function shall return the
      * estimated eye centers. This will be an empty vector when passed into the
      * function, and the implementation shall populate it with the appropriate
@@ -87,15 +87,15 @@ public:
      * template generation, the similarity score shall be -1 and the function
      * return value shall be VerifTemplateError.
      *
-     * param[in] verifTemplate
+     * @param[in] verifTemplate
      * A verification template from createTemplate(role=Verification_11).
      * The underlying data can be accessed via verifTemplate.data().  The size,
      * in bytes, of the template could be retrieved as verifTemplate.size().
-     * param[in] enrollTemplate
+     * @param[in] enrollTemplate
      * An enrollment template from createTemplate(role=Enrollment_11).
      * The underlying data can be accessed via enrollTemplate.data().  The size,
      * in bytes, of the template could be retrieved as enrollTemplate.size().
-     * param[out] similarity
+     * @param[out] similarity
      * A similarity score resulting from comparison of the templates,
      * on the range [0,DBL_MAX].
      *

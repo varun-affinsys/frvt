@@ -7,6 +7,8 @@ root=$(pwd)
 approot=$root/bin
 libroot=$root/lib
 
+rm -r $approot
+
 echo -n "Looking for core implementation library in $libroot."
 # Get libraries into a string to
 # pass into Makefile
