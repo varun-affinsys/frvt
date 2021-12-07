@@ -356,13 +356,13 @@ enum class ImageLabel {
 enum class QualityElement {
 	Begin = 0,
     /** Subject pose yaw */ 
-    SubjectPoseYaw = Begin,
-    /** Subject pose pitch */
+	SubjectPoseYaw = Begin,
+	/** Subject pose pitch */
 	SubjectPosePitch,
-    /** Subject pose roll */ 
-    SubjectPoseRoll,
-    /** Subject occlusion nose and mouth */
-    SubjectOcclusionNoseMouth,
+	/** Subject pose roll */ 
+	SubjectPoseRoll,
+	/** Subject occlusion nose and mouth */
+	SubjectOcclusionNoseMouth,
 	/** Capture motion blur */
 	CaptureMotionBlur,
 	End
