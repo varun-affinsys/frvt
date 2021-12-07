@@ -72,9 +72,9 @@ public:
 
     /**
      * @brief This function takes an image and outputs 1) a vector
-	 * that contains quality element values for each face detected
-	 * in the image and 2) a vector of eye coordinates corresponding
-	 * to each face detected in the image.
+     * that contains quality element values for each face detected
+     * in the image and 2) a vector of eye coordinates corresponding
+     * to each face detected in the image.
      *
      * @param[in] face
      * Single face image
@@ -94,12 +94,12 @@ public:
      * Values in eyeCoordinates[i] should correspond to the face quality elements in
      * qualityVector[i].
      * 
-     */	
+     */ 
     virtual FRVT::ReturnStatus
     vectorQuality(
-	const FRVT::Image &face,
-	std::vector<FRVT::QualityElementValues> &qualityVector,
-	std::vector<FRVT::EyePair> &eyeCoordinates) = 0;
+        const FRVT::Image &face,
+        std::vector<FRVT::QualityElementValues> &qualityVector,
+        std::vector<FRVT::EyePair> &eyeCoordinates) = 0;
 
     /**
      * @brief
