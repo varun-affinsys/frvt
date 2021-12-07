@@ -31,8 +31,8 @@ NullImplFRVTQuality::initialize(const std::string &configDir)
 
 ReturnStatus
 NullImplFRVTQuality::scalarQuality(
-        const FRVT::Image &face,
-        double &quality)
+    const FRVT::Image &face,
+    double &quality)
 {
     quality = (rand() % 100) + 1; 
     return ReturnStatus(ReturnCode::Success);
