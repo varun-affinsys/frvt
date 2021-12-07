@@ -226,7 +226,7 @@ typedef struct ReturnStatus {
 
     ReturnStatus() :
         code{ReturnCode::UnknownError},
-    info{""}
+        info{""}
         {}
     /**
      * @brief
