@@ -26,10 +26,10 @@ using namespace FRVT_QUALITY;
 
 int
 runQuality(
-        std::shared_ptr<Interface> &implPtr,
-        const string &inputFile,
-        const string &outputLog,
-		Action action)
+    std::shared_ptr<Interface> &implPtr,
+    const string &inputFile,
+    const string &outputLog,
+    Action action)
 {
     /* Read input file */
     ifstream inputStream(inputFile);
@@ -46,18 +46,18 @@ runQuality(
     }
 
     /* header */
-	if (action == Action::ScalarQ)
-		logStream << "id image returnCode quality" << endl;
-	else if (action == Action::VectorQ) {
-		logStream << "id image returnCode numDetections detectionIndex eyeCoordinates(xleft,yleft,xright,yright) ";
-		for (QualityElement e = QualityElement::Begin; e != QualityElement::End; ++e) {
-			logStream << e << " "; 
-		}
-		logStream << endl;
-	}		
+    if (action == Action::ScalarQ)
+        logStream << "id image returnCode quality" << endl;
+    else if (action == Action::VectorQ) {
+        logStream << "id image returnCode numDetections detectionIndex eyeCoordinates(xleft,yleft,xright,yright) ";
+        for (QualityElement e = QualityElement::Begin; e != QualityElement::End; ++e) {
+            logStream << e << " "; 
+        }
+        logStream << endl;
+    }       
 
     string id, imagePath, desc;
-	ReturnStatus ret;
+    ReturnStatus ret;
     while (inputStream >> id >> imagePath >> desc) {
         Image image;
         if (!readImage(imagePath, image)) {
@@ -68,58 +68,58 @@ runQuality(
 
         Image face{image};
         double quality{-1.0};
-		vector<QualityElementValues> qualityVector;
-		vector<EyePair> eyeCoordinates;
-		if (action == Action::ScalarQ) 
-			ret = implPtr->scalarQuality(face, quality);
-		else if (action == Action::VectorQ)
-			ret = implPtr->vectorQuality(face, qualityVector, eyeCoordinates);
-		
-		/* If function is not implemented, clean up and exit */
-		if (ret.code == ReturnCode::NotImplemented) {
-			break;
-		}
+        vector<QualityElementValues> qualityVector;
+        vector<EyePair> eyeCoordinates;
+        if (action == Action::ScalarQ) 
+            ret = implPtr->scalarQuality(face, quality);
+        else if (action == Action::VectorQ)
+            ret = implPtr->vectorQuality(face, qualityVector, eyeCoordinates);
+        
+        /* If function is not implemented, clean up and exit */
+        if (ret.code == ReturnCode::NotImplemented) {
+            break;
+        }
 
-		if (action == Action::ScalarQ) {
-			logStream << id << " "
-				<< imagePath << " "
-				<< static_cast<std::underlying_type<ReturnCode>::type>(ret.code) << " "
-				<< quality << endl;
-		} else if (action == Action::VectorQ) {
-			/* There needs to be the same number of eye
-			 * coordinate entries as quality entries 
-			 */
-			auto numDetections = qualityVector.size();
-			if (eyeCoordinates.size() != numDetections) {
-				cerr << "[ERROR] The number of eye coordinates and face detections returned are not the same.  Please fix." << endl;
-				raise(SIGTERM);		
-			}
-			if (ret.code != ReturnCode::Success || numDetections == 0) {
-				logStream << id << " "
-					<< imagePath << " "
-					<< static_cast<std::underlying_type<ReturnCode>::type>(ret.code) << " "
-					<< "0 NA 0,0,0,0 NA NA NA NA NA" << endl;
-			} else {
-				for (unsigned int i = 0; i < numDetections; i++) {
-					logStream << id << " "
-						<< imagePath << " "
-						<< static_cast<std::underlying_type<ReturnCode>::type>(ret.code) << " "
-						<< numDetections << " ";
+        if (action == Action::ScalarQ) {
+            logStream << id << " "
+                << imagePath << " "
+                << static_cast<std::underlying_type<ReturnCode>::type>(ret.code) << " "
+                << quality << endl;
+        } else if (action == Action::VectorQ) {
+            /* There needs to be the same number of eye
+             * coordinate entries as quality entries 
+             */
+            auto numDetections = qualityVector.size();
+            if (eyeCoordinates.size() != numDetections) {
+                cerr << "[ERROR] The number of eye coordinates and face detections returned are not the same.  Please fix." << endl;
+                raise(SIGTERM);     
+            }
+            if (ret.code != ReturnCode::Success || numDetections == 0) {
+                logStream << id << " "
+                    << imagePath << " "
+                    << static_cast<std::underlying_type<ReturnCode>::type>(ret.code) << " "
+                    << "0 NA 0,0,0,0 NA NA NA NA NA" << endl;
+            } else {
+                for (unsigned int i = 0; i < numDetections; i++) {
+                    logStream << id << " "
+                        << imagePath << " "
+                        << static_cast<std::underlying_type<ReturnCode>::type>(ret.code) << " "
+                        << numDetections << " ";
 
-					auto detection = qualityVector[i];
-					auto eyes = eyeCoordinates[i];
-					logStream << i << " "
-						<< ((eyes.isLeftAssigned) ? (to_string(eyes.xleft) + "," + to_string(eyes.yleft) + ",") : "NA,NA,")
-						<< ((eyes.isRightAssigned) ? (to_string(eyes.xright) + "," + to_string(eyes.yright)) : "NA,NA");
-						for (QualityElement e = QualityElement::Begin; e != QualityElement::End; ++e) {
-							auto it = detection.find(e);
-							logStream << " " << ((it != detection.end()) ? to_string(it->second) : "NA");
-						}
-					logStream << endl;
-				}
-			}
+                    auto detection = qualityVector[i];
+                    auto eyes = eyeCoordinates[i];
+                    logStream << i << " "
+                        << ((eyes.isLeftAssigned) ? (to_string(eyes.xleft) + "," + to_string(eyes.yleft) + ",") : "NA,NA,")
+                        << ((eyes.isRightAssigned) ? (to_string(eyes.xright) + "," + to_string(eyes.yright)) : "NA,NA");
+                        for (QualityElement e = QualityElement::Begin; e != QualityElement::End; ++e) {
+                            auto it = detection.find(e);
+                            logStream << " " << ((it != detection.end()) ? to_string(it->second) : "NA");
+                        }
+                    logStream << endl;
+                }
+            }
 
-		}
+        }
     }
     inputStream.close();
 
@@ -152,39 +152,39 @@ main(
     auto exitStatus = SUCCESS;
 
     uint16_t currAPIMajorVersion{2},
-		currAPIMinorVersion{0},
-		currStructsMajorVersion{1},
-		currStructsMinorVersion{2};
+        currAPIMinorVersion{0},
+        currStructsMajorVersion{1},
+        currStructsMinorVersion{2};
 
     /* Check versioning of both frvt_structs.h and API header file */
-	if ((FRVT::FRVT_STRUCTS_MAJOR_VERSION != currStructsMajorVersion) ||
-			(FRVT::FRVT_STRUCTS_MINOR_VERSION != currStructsMinorVersion)) {
-		cerr << "[ERROR] You've compiled your library with an old version of the frvt_structs.h file: version " <<
-		    FRVT::FRVT_STRUCTS_MAJOR_VERSION << "." <<
-		    FRVT::FRVT_STRUCTS_MINOR_VERSION <<
-		    ".  Please re-build with the latest version: " <<
-		    currStructsMajorVersion << "." <<
-	   	    currStructsMinorVersion << "." << endl;
-		return (FAILURE);
-	}
+    if ((FRVT::FRVT_STRUCTS_MAJOR_VERSION != currStructsMajorVersion) ||
+            (FRVT::FRVT_STRUCTS_MINOR_VERSION != currStructsMinorVersion)) {
+        cerr << "[ERROR] You've compiled your library with an old version of the frvt_structs.h file: version " <<
+            FRVT::FRVT_STRUCTS_MAJOR_VERSION << "." <<
+            FRVT::FRVT_STRUCTS_MINOR_VERSION <<
+            ".  Please re-build with the latest version: " <<
+            currStructsMajorVersion << "." <<
+            currStructsMinorVersion << "." << endl;
+        return (FAILURE);
+    }
 
-	if ((FRVT_QUALITY::API_MAJOR_VERSION != currAPIMajorVersion) ||
-			(FRVT_QUALITY::API_MINOR_VERSION != currAPIMinorVersion)) {
-		cerr << "[ERROR] You've compiled your library with an old version of the API header file: " <<
-		    FRVT_QUALITY::API_MAJOR_VERSION << "." <<
-		    FRVT_QUALITY::API_MINOR_VERSION <<
-		    ".  Please re-build with the latest version:" <<
-		    currAPIMajorVersion << "." <<
-		    currStructsMinorVersion << "." << endl;
-		return (FAILURE);
-	}
+    if ((FRVT_QUALITY::API_MAJOR_VERSION != currAPIMajorVersion) ||
+            (FRVT_QUALITY::API_MINOR_VERSION != currAPIMinorVersion)) {
+        cerr << "[ERROR] You've compiled your library with an old version of the API header file: " <<
+            FRVT_QUALITY::API_MAJOR_VERSION << "." <<
+            FRVT_QUALITY::API_MINOR_VERSION <<
+            ".  Please re-build with the latest version:" <<
+            currAPIMajorVersion << "." <<
+            currStructsMinorVersion << "." << endl;
+        return (FAILURE);
+    }
 
     int requiredArgs = 2; /* exec name and action */
     if (argc < requiredArgs)
         usage(argv[0]);
 
     string actionstr{argv[1]},
-		configDir{"config"},
+        configDir{"config"},
         outputDir{"output"},
         outputFileStem{"stem"},
         inputFile;
@@ -207,15 +207,15 @@ main(
         }
     }
 
-	Action action = mapStringToAction[actionstr];
-	switch(action) {
-		case Action::ScalarQ:
-		case Action::VectorQ:
-			break;
-		default:
-			cerr << "Unknown command: " << actionstr << endl;
-			usage(argv[0]);
-	}
+    Action action = mapStringToAction[actionstr];
+    switch(action) {
+        case Action::ScalarQ:
+        case Action::VectorQ:
+            break;
+        default:
+            cerr << "Unknown command: " << actionstr << endl;
+            usage(argv[0]);
+    }
 
     /* Get implementation pointer */
     auto implPtr = Interface::getImplementation();
@@ -237,28 +237,28 @@ main(
     bool parent = false;
     int i = 0;
     for (auto &inputFile : inputFileVector) {
-		/* Fork */
-		switch(fork()) {
-		case 0: /* Child */
-			switch (action) {
-				case Action::ScalarQ:
-				case Action::VectorQ:
-					return runQuality(
-							implPtr,
-							inputFile,
-							outputDir + "/" + outputFileStem + ".log." + to_string(i),
-							action);
-				default:
-					return FAILURE;
-			}
-		case -1: /* Error */
-		cerr << "Problem forking" << endl;
-		break;
-		default: /* Parent */
-			parent = true;
-			break;
-		}
-		i++;
+        /* Fork */
+        switch(fork()) {
+        case 0: /* Child */
+            switch (action) {
+                case Action::ScalarQ:
+                case Action::VectorQ:
+                    return runQuality(
+                        implPtr,
+                        inputFile,
+                        outputDir + "/" + outputFileStem + ".log." + to_string(i),
+                        action);
+                default:
+                    return FAILURE;
+            }
+        case -1: /* Error */
+        cerr << "Problem forking" << endl;
+        break;
+        default: /* Parent */
+            parent = true;
+            break;
+        }
+        i++;
     }
 
     /* Parent -- wait for children */

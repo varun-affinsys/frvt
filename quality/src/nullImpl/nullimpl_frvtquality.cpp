@@ -25,43 +25,43 @@ NullImplFRVTQuality::~NullImplFRVTQuality() {}
 ReturnStatus
 NullImplFRVTQuality::initialize(const std::string &configDir)
 {
-	// Read stuff (models, etc.) in from configDir
+    // Read stuff (models, etc.) in from configDir
     return ReturnStatus(ReturnCode::Success);
 }
 
 ReturnStatus
 NullImplFRVTQuality::scalarQuality(
-		const FRVT::Image &face,
-		double &quality)
+        const FRVT::Image &face,
+        double &quality)
 {
-	quality = (rand() % 100) + 1; 
-	return ReturnStatus(ReturnCode::Success);
+    quality = (rand() % 100) + 1; 
+    return ReturnStatus(ReturnCode::Success);
 }
 
 ReturnStatus
 NullImplFRVTQuality::vectorQuality(
-	const FRVT::Image &face,
-	std::vector<FRVT::QualityElementValues> &qualityVector,
-	std::vector<FRVT::EyePair> &eyeCoordinates)
+    const FRVT::Image &face,
+    std::vector<FRVT::QualityElementValues> &qualityVector,
+    std::vector<FRVT::EyePair> &eyeCoordinates)
 {
     std::uniform_real_distribution<double> dist(-90, 90); 
     std::mt19937 rng; 
     rng.seed(std::random_device{}()); 
-	
-	for (int i = 0; i < rand() % 3; i++) {
-		QualityElementValues qualityMap;
-		qualityMap[QualityElement::SubjectPoseYaw] = dist(rng);
-		qualityMap[QualityElement::SubjectPosePitch] = dist(rng);
-		qualityMap[QualityElement::SubjectPoseRoll] = dist(rng);	
-		qualityVector.push_back(qualityMap);
-		eyeCoordinates.push_back(EyePair(true, true, 50+i, 25+i, 20+i, 25+i));
-	}
-	return ReturnStatus(ReturnCode::Success);
+    
+    for (int i = 0; i < rand() % 3; i++) {
+        QualityElementValues qualityMap;
+        qualityMap[QualityElement::SubjectPoseYaw] = dist(rng);
+        qualityMap[QualityElement::SubjectPosePitch] = dist(rng);
+        qualityMap[QualityElement::SubjectPoseRoll] = dist(rng);    
+        qualityVector.push_back(qualityMap);
+        eyeCoordinates.push_back(EyePair(true, true, 50+i, 25+i, 20+i, 25+i));
+    }
+    return ReturnStatus(ReturnCode::Success);
 }
 
 std::shared_ptr<Interface>
 Interface::getImplementation()
 {
-	return std::make_shared<NullImplFRVTQuality>();
+    return std::make_shared<NullImplFRVTQuality>();
 }
 
