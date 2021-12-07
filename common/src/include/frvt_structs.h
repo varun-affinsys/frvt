@@ -196,7 +196,7 @@ operator<<(
     case ReturnCode::MatchError:
         return (s << "Error occurred during the 1:1 match operation");
     case ReturnCode::QualityAssessmentError:
-	return (s << "Failure to generate a quality score on the input image");
+    return (s << "Failure to generate a quality score on the input image");
     case ReturnCode::NotImplemented:
         return (s << "Function is not implemented");
     case ReturnCode::VendorError:
@@ -225,9 +225,9 @@ typedef struct ReturnStatus {
     std::string info;
 
     ReturnStatus() :
-    	code{ReturnCode::UnknownError},
-	info{""}
-    	{}
+        code{ReturnCode::UnknownError},
+    info{""}
+        {}
     /**
      * @brief
      * Create a ReturnStatus object.
@@ -374,7 +374,7 @@ operator++(QualityElement& qe) {
    if (qe == QualityElement::End) 
         throw std::out_of_range("QualityElement& operator++(QualityElement&)");
     qe = QualityElement(static_cast<std::underlying_type<QualityElement>::type>(qe) + 1);
-	return qe;
+    return qe;
 }
 
 /** Output stream operator for QualityElement enum. */
@@ -396,7 +396,7 @@ operator<<(
         return (s << "captureMotionBlur");
     default:
         return (s << "undefined QualityElement");
-	}
+    }
 }
 
 /**
