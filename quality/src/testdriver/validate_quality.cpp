@@ -28,7 +28,8 @@ int
 runQuality(
         std::shared_ptr<Interface> &implPtr,
         const string &inputFile,
-        const string &outputLog)
+        const string &outputLog,
+		Action action)
 {
     /* Read input file */
     ifstream inputStream(inputFile);
@@ -45,9 +46,18 @@ runQuality(
     }
 
     /* header */
-    logStream << "id image returnCode quality" << endl;
+	if (action == Action::ScalarQ)
+		logStream << "id image returnCode quality" << endl;
+	else if (action == Action::VectorQ) {
+		logStream << "id image returnCode numDetections detectionIndex eyeCoordinates(xleft,yleft,xright,yright) ";
+		for (QualityElement e = QualityElement::Begin; e != QualityElement::End; ++e) {
+			logStream << e << " "; 
+		}
+		logStream << endl;
+	}		
 
     string id, imagePath, desc;
+	ReturnStatus ret;
     while (inputStream >> id >> imagePath >> desc) {
         Image image;
         if (!readImage(imagePath, image)) {
@@ -58,14 +68,58 @@ runQuality(
 
         Image face{image};
         double quality{-1.0};
-        auto ret = implPtr->scalarQuality(face, quality);
+		vector<QualityElementValues> qualityVector;
+		vector<EyePair> eyeCoordinates;
+		if (action == Action::ScalarQ) 
+			ret = implPtr->scalarQuality(face, quality);
+		else if (action == Action::VectorQ)
+			ret = implPtr->vectorQuality(face, qualityVector, eyeCoordinates);
+		
+		/* If function is not implemented, clean up and exit */
+		if (ret.code == ReturnCode::NotImplemented) {
+			break;
+		}
 
-        /* Write output to log */
-        logStream << id << " "
-                << imagePath << " "
-                << static_cast<std::underlying_type<ReturnCode>::type>(ret.code) << " "
-                << quality
-                << endl;
+		if (action == Action::ScalarQ) {
+			logStream << id << " "
+				<< imagePath << " "
+				<< static_cast<std::underlying_type<ReturnCode>::type>(ret.code) << " "
+				<< quality << endl;
+		} else if (action == Action::VectorQ) {
+			/* There needs to be the same number of eye
+			 * coordinate entries as quality entries 
+			 */
+			auto numDetections = qualityVector.size();
+			if (eyeCoordinates.size() != numDetections) {
+				cerr << "[ERROR] The number of eye coordinates and face detections returned are not the same.  Please fix." << endl;
+				raise(SIGTERM);		
+			}
+			if (ret.code != ReturnCode::Success || numDetections == 0) {
+				logStream << id << " "
+					<< imagePath << " "
+					<< static_cast<std::underlying_type<ReturnCode>::type>(ret.code) << " "
+					<< "0 NA 0,0,0,0 NA NA NA NA NA" << endl;
+			} else {
+				for (unsigned int i = 0; i < numDetections; i++) {
+					logStream << id << " "
+						<< imagePath << " "
+						<< static_cast<std::underlying_type<ReturnCode>::type>(ret.code) << " "
+						<< numDetections << " ";
+
+					auto detection = qualityVector[i];
+					auto eyes = eyeCoordinates[i];
+					logStream << i << " "
+						<< ((eyes.isLeftAssigned) ? (to_string(eyes.xleft) + "," + to_string(eyes.yleft) + ",") : "NA,NA,")
+						<< ((eyes.isRightAssigned) ? (to_string(eyes.xright) + "," + to_string(eyes.yright)) : "NA,NA");
+						for (QualityElement e = QualityElement::Begin; e != QualityElement::End; ++e) {
+							auto it = detection.find(e);
+							logStream << " " << ((it != detection.end()) ? to_string(it->second) : "NA");
+						}
+					logStream << endl;
+				}
+			}
+
+		}
     }
     inputStream.close();
 
@@ -73,6 +127,13 @@ runQuality(
     if( remove(inputFile.c_str()) != 0 )
         cerr << "Error deleting file: " << inputFile << endl;
 
+    if (ret.code == ReturnCode::NotImplemented) {
+        /* Remove the output file */
+        logStream.close();
+        if( remove(outputLog.c_str()) != 0 )
+            cerr << "Error deleting file: " << outputLog << endl;
+        return NOT_IMPLEMENTED;
+    }
     return SUCCESS;
 }
 
@@ -90,10 +151,10 @@ main(
 {
     auto exitStatus = SUCCESS;
 
-    uint16_t currAPIMajorVersion{1},
+    uint16_t currAPIMajorVersion{2},
 		currAPIMinorVersion{0},
 		currStructsMajorVersion{1},
-		currStructsMinorVersion{1};
+		currStructsMinorVersion{2};
 
     /* Check versioning of both frvt_structs.h and API header file */
 	if ((FRVT::FRVT_STRUCTS_MAJOR_VERSION != currStructsMajorVersion) ||
@@ -109,7 +170,7 @@ main(
 
 	if ((FRVT_QUALITY::API_MAJOR_VERSION != currAPIMajorVersion) ||
 			(FRVT_QUALITY::API_MINOR_VERSION != currAPIMinorVersion)) {
-		std::cerr << "[ERROR] You've compiled your library with an old version of the API header file: " <<
+		cerr << "[ERROR] You've compiled your library with an old version of the API header file: " <<
 		    FRVT_QUALITY::API_MAJOR_VERSION << "." <<
 		    FRVT_QUALITY::API_MINOR_VERSION <<
 		    ".  Please re-build with the latest version:" <<
@@ -118,11 +179,12 @@ main(
 		return (FAILURE);
 	}
 
-    int requiredArgs = 1; /* exec name */
+    int requiredArgs = 2; /* exec name and action */
     if (argc < requiredArgs)
         usage(argv[0]);
 
-    string configDir{"config"},
+    string actionstr{argv[1]},
+		configDir{"config"},
         outputDir{"output"},
         outputFileStem{"stem"},
         inputFile;
@@ -144,6 +206,16 @@ main(
             usage(argv[0]);
         }
     }
+
+	Action action = mapStringToAction[actionstr];
+	switch(action) {
+		case Action::ScalarQ:
+		case Action::VectorQ:
+			break;
+		default:
+			cerr << "Unknown command: " << actionstr << endl;
+			usage(argv[0]);
+	}
 
     /* Get implementation pointer */
     auto implPtr = Interface::getImplementation();
@@ -168,10 +240,17 @@ main(
 		/* Fork */
 		switch(fork()) {
 		case 0: /* Child */
-			return runQuality(
-					implPtr,
-					inputFile,
-					outputDir + "/" + outputFileStem + ".log." + to_string(i));
+			switch (action) {
+				case Action::ScalarQ:
+				case Action::VectorQ:
+					return runQuality(
+							implPtr,
+							inputFile,
+							outputDir + "/" + outputFileStem + ".log." + to_string(i),
+							action);
+				default:
+					return FAILURE;
+			}
 		case -1: /* Error */
 		cerr << "Problem forking" << endl;
 		break;
@@ -182,7 +261,6 @@ main(
 		i++;
     }
 
-
     /* Parent -- wait for children */
     if (parent) {
         while (numForks > 0) {
@@ -190,7 +268,7 @@ main(
             pid_t cpid;
 
             cpid = wait(&stat_val);
-            if (WIFEXITED(stat_val)) {}
+            if (WIFEXITED(stat_val)) { exitStatus = WEXITSTATUS(stat_val); }
             else if (WIFSIGNALED(stat_val)) {
                 cerr << "PID " << cpid << " exited due to signal " <<
                         WTERMSIG(stat_val) << endl;

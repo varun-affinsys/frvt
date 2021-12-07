@@ -17,6 +17,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <map>
 
 namespace FRVT {
 /**
@@ -350,6 +351,61 @@ enum class ImageLabel {
     Scanned
 };
 
+/** Quality element labels 
+ */
+enum class QualityElement {
+	Begin = 0,
+    /** Subject pose yaw */ 
+    SubjectPoseYaw = Begin,
+    /** Subject pose pitch */
+	SubjectPosePitch,
+    /** Subject pose roll */ 
+    SubjectPoseRoll,
+    /** Subject occlusion nose and mouth */
+    SubjectOcclusionNoseMouth,
+	/** Capture motion blur */
+	CaptureMotionBlur,
+	End
+};
+
+/** To support iterating over QualityElement enum values */
+inline QualityElement& 
+operator++(QualityElement& qe) {
+   if (qe == QualityElement::End) 
+        throw std::out_of_range("QualityElement& operator++(QualityElement&)");
+    qe = QualityElement(static_cast<std::underlying_type<QualityElement>::type>(qe) + 1);
+	return qe;
+}
+
+/** Output stream operator for QualityElement enum. */
+inline std::ostream&
+operator<<(
+    std::ostream &s,
+    const QualityElement &qe)
+{
+    switch (qe) {
+    case QualityElement::SubjectPoseYaw:
+        return (s << "subjectPoseYaw");
+    case QualityElement::SubjectPosePitch:
+        return (s << "subjectPosePitch");
+    case QualityElement::SubjectPoseRoll:
+        return (s << "subjectPoseRoll");
+    case QualityElement::SubjectOcclusionNoseMouth:
+        return (s << "subjectOcclusionNoseMouth");
+    case QualityElement::CaptureMotionBlur:
+        return (s << "captureMotionBlur");
+    default:
+        return (s << "undefined QualityElement");
+	}
+}
+
+/**
+ * @brief
+ * Data structure that stores key-value pairs, with each
+ * entry representing a quality element and its value 
+ */
+using QualityElementValues = std::map<QualityElement, double>;
+
 /*
  * Versioning
  *
@@ -365,7 +421,7 @@ extern uint16_t FRVT_STRUCTS_MINOR_VERSION;
 /** major version number. */
 uint16_t FRVT_STRUCTS_MAJOR_VERSION{1};
 /** minor version number. */
-uint16_t FRVT_STRUCTS_MINOR_VERSION{1};
+uint16_t FRVT_STRUCTS_MINOR_VERSION{2};
 #endif /* NIST_EXTERN_FRVT_STRUCTS_VERSION */
 }
 

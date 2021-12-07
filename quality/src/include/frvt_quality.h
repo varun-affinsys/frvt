@@ -54,9 +54,9 @@ public:
      * via Image::Label, and it is up to the implementation to alter its behavior
      * based on the image type (e.g., Iso (full-frontal) versus Wild (off-angle).
      *
-     * param[in] face
+     * @param[in] face
      * Single face image
-     * param[out] quality
+     * @param[out] quality
      * A scalar value assessment of image quality.  The legal values are
      * [0,100] - The value should have a monotonic decreasing relationship with
      * false non-match rate anticipated for this sample if it was compared with
@@ -69,6 +69,37 @@ public:
     scalarQuality(
         const FRVT::Image &face,
         double &quality) = 0;
+
+    /**
+     * @brief This function takes an image and outputs 1) a vector
+	 * that contains quality element values for each face detected
+	 * in the image and 2) a vector of eye coordinates corresponding
+	 * to each face detected in the image.
+     *
+     * @param[in] face
+     * Single face image
+     * @param[out] qualityVector
+     * A vector of QualityElementValues.  This will initially be an empty
+	 * vector when passed into the function, and the implementation should
+	 * populate it with the appropriate number of entries.  Each entry in
+	 * the vector should contain a set of quality element values associated with 
+	 * each face detected in the image.  Each QualityElementValues object should 
+	 * be populated with quality elements that have been implemented by the developer.  
+	 * Developers are only asked to provide values for those quality elements that they
+	 * have implemented.
+	 * @param[out] eyeCoordinates
+	 * For each face detected in the image, the function should return the estimated
+	 * eye centers.  This will initially be an empty vector when passed into the fuction, and
+	 * the implementation should populate it with the appropriate number of entries.
+	 * Values in eyeCoordinates[i] should correspond to the face quality elements in
+	 * qualityVector[i].
+	 * 
+     */	
+	virtual FRVT::ReturnStatus
+	vectorQuality(
+		const FRVT::Image &face,
+		std::vector<FRVT::QualityElementValues> &qualityVector,
+		std::vector<FRVT::EyePair> &eyeCoordinates) = 0;
 
     /**
      * @brief
@@ -100,7 +131,7 @@ extern uint16_t API_MAJOR_VERSION;
 extern uint16_t API_MINOR_VERSION;
 #else /* NIST_EXTERN_API_VERSION */
 /** API major version number. */
-uint16_t API_MAJOR_VERSION{1};
+uint16_t API_MAJOR_VERSION{2};
 /** API minor version number. */
 uint16_t API_MINOR_VERSION{0};
 #endif /* NIST_EXTERN_API_VERSION */
