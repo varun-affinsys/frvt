@@ -89,7 +89,7 @@ public:
      * have implemented.
      * @param[out] eyeCoordinates
      * For each face detected in the image, the function should return the estimated
-     * eye centers.  This will initially be an empty vector when passed into the fuction, and
+     * eye centers.  This will initially be an empty vector when passed into the function, and
      * the implementation should populate it with the appropriate number of entries.
      * Values in eyeCoordinates[i] should correspond to the face quality elements in
      * qualityVector[i].
