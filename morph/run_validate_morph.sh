@@ -1,40 +1,15 @@
 #!/bin/bash
-success=0
-failure=1
 
-bold=$(tput bold)
-normal=$(tput sgr0)
+source ../common/scripts/utils.sh
 
 # Check version of OS
-reqOS="CentOS Linux release 8.2.2004 (Core) "
-currentOS=$(cat /etc/centos-release)
-if [ "$reqOS" != "$currentOS" ]; then
-	echo "${bold}[ERROR] You are not running the correct version of the operating system, which should be $reqOS.  Please install the correct operating system and re-run this validation package.${normal}"
-	exit $failure
-fi
+check_os
 
 # Install the necessary packages to run validation
-echo -n "Checking installation of required packages "
-for package in coreutils gawk gcc gcc-c++ grep cmake make sed libarchive
-do
-	yum -q list installed $package &> /dev/null
-	retcode=$?
-	if [[ $retcode != 0 ]]; then
-		sudo yum install -y $package
-	fi
-    # Need a later version to support cmake for now
-    if [ "$package" == "libarchive" ]; then
-        sudo yum update -y $package
-    fi
-done
-echo "[SUCCESS]"
+check_packages
 
-# Check for ./doc/version.txt
-if [ ! -s "./doc/version.txt" ]; then
-	echo "[ERROR] ./doc/version.txt was not found.  Per the API document, ./doc/version.txt must document versioning information for the submitted software."
-	echo "Please fix this and re-run."
-	exit $failure
-fi
+# Check that required folders exist
+check_folders
 
 # Compile and build implementation library against
 # validation test driver
@@ -93,7 +68,7 @@ do
 done
 
 # write OS to text file
-cat /etc/redhat-release > validation/os.txt
+log_os
 
 tar -zcf $libstring.tar.gz ./config ./lib ./validation ./doc
 echo "[SUCCESS]"

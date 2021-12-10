@@ -1,12 +1,13 @@
 #!/bin/bash
-success=0
-failure=1
+
+source ../common/scripts/utils.sh
 
 FRVTLIB="libfrvt_11_<company>_<three digit sequence>.so"
 root=$(pwd)
 approot=$root/bin
 libroot=$root/lib
 
+rm -r $approot
 echo -n "Looking for core implementation library in $libroot."
 # Get libraries into a string to
 # pass into Makefile
