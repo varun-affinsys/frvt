@@ -49,7 +49,7 @@ runQuality(
     if (action == Action::ScalarQ)
         logStream << "id image returnCode quality" << endl;
     else if (action == Action::VectorQ) {
-        logStream << "id image returnCode numDetections detectionIndex eyeCoordinates(xleft,yleft,xright,yright) ";
+        logStream << "id image returnCode numDetections detectionIndex eyesXleft eyesYleft eyesXright eyesYright ";
         for (QualityElement e = QualityElement::Begin; e != QualityElement::End; ++e) {
             logStream << e << " "; 
         }
@@ -98,7 +98,7 @@ runQuality(
                 logStream << id << " "
                     << imagePath << " "
                     << static_cast<std::underlying_type<ReturnCode>::type>(ret.code) << " "
-                    << "0 NA 0,0,0,0 NA NA NA NA NA" << endl;
+                    << "0 NA 0 0 0 0 NA NA NA NA NA" << endl;
             } else {
                 for (unsigned int i = 0; i < numDetections; i++) {
                     logStream << id << " "
@@ -109,8 +109,8 @@ runQuality(
                     auto detection = qualityVector[i];
                     auto eyes = eyeCoordinates[i];
                     logStream << i << " "
-                        << ((eyes.isLeftAssigned) ? (to_string(eyes.xleft) + "," + to_string(eyes.yleft) + ",") : "NA,NA,")
-                        << ((eyes.isRightAssigned) ? (to_string(eyes.xright) + "," + to_string(eyes.yright)) : "NA,NA");
+                        << ((eyes.isLeftAssigned) ? (to_string(eyes.xleft) + " " + to_string(eyes.yleft) + " ") : "NA NA ")
+                        << ((eyes.isRightAssigned) ? (to_string(eyes.xright) + " " + to_string(eyes.yright)) : "NA NA");
                         for (QualityElement e = QualityElement::Begin; e != QualityElement::End; ++e) {
                             auto it = detection.find(e);
                             logStream << " " << ((it != detection.end()) ? to_string(it->second) : "NA");
