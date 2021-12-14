@@ -256,12 +256,12 @@ typedef struct EyePair
      * assigned successfully, this value should be set to true,
      * otherwise false. */
     bool isRightAssigned;
-    /** X and Y coordinate of the center of the subject's left eye.  If the
+    /** X and Y coordinate of the midpoint between the two canthi of the subject's left eye.  If the
      * eye coordinate is out of range (e.g. x < 0 or x >= width), isLeftAssigned
      * should be set to false, and the left eye coordinates will be ignored. */
     uint16_t xleft;
     uint16_t yleft;
-    /** X and Y coordinate of the center of the subject's right eye.  If the
+    /** X and Y coordinate of the midpoint between the two canthi of the subject's right eye.  If the
      * eye coordinate is out of range (e.g. x < 0 or x >= width), isRightAssigned
      * should be set to false, and the right eye coordinates will be ignored. */
     uint16_t xright;
