@@ -200,7 +200,8 @@ search(shared_ptr<Interface> &implPtr,
     const string &configDir,
     const string &enrollDir,
     const string &inputFile,
-    const string &candList)
+    const string &candList,
+    const Action &action)
 {
     /* Read probes */
     ifstream inputStream(inputFile);
@@ -228,13 +229,35 @@ search(shared_ptr<Interface> &implPtr,
         }
         image.description = mapStringToImgLabel[desc];
 
-        Multiface faces{image};
-        vector<uint8_t> templ;
         vector<EyePair> eyes;
-        auto ret = implPtr->createTemplate(faces, TemplateRole::Search_1N, templ, eyes);
+        if (action == Action::Search_1N) {
+            Multiface faces{image};
+            vector<uint8_t> templ;
+            auto ret = implPtr->createTemplate(faces, TemplateRole::Search_1N, templ, eyes);
+            if (ret.code == ReturnCode::NotImplemented) {
+                cerr << "[ERROR] The createTemplate(faces, role, templ, eyes) function returned ReturnCode::NotImplemented.  This function must be implemented!" << std::endl;
+                raise(SIGTERM);
+            }
 
-        /* Do search and log results to candidatelist file */
-        searchAndLog(implPtr, id, templ, candListStream, ret);
+            /* Do search and log results to candidatelist file */
+            searchAndLog(implPtr, id, templ, candListStream, ret);
+        } else if (action == Action::SearchMulti_1N) {
+            std::vector<std::vector<uint8_t>> templs;
+            auto ret = implPtr->createTemplate(image, TemplateRole::Search_1N, templs, eyes);
+            if (ret.code == ReturnCode::NotImplemented) {
+                cerr << "[ERROR] The createTemplate(image, role, templs, eyes) function returned ReturnCode::NotImplemented.  This function must be implemented!" << std::endl;
+                raise(SIGTERM);
+            }
+            if (templs.size() != eyes.size()) {
+                cerr << "[ERROR] The number of eye coordinates do not match the number of templates." << endl;
+                raise(SIGTERM);
+            }
+            /* For each template generated, do search and log results to candidatelist file */
+            for (unsigned int i = 0; i < templs.size(); i++) {
+                string templID = id + "_" + to_string(i);
+                searchAndLog(implPtr, templID, templs[i], candListStream, ret);            
+            }
+        }
     }
     inputStream.close();
 
@@ -312,7 +335,7 @@ insert(shared_ptr<Interface> &implPtr,
 
 void usage(const string &executable)
 {
-    cerr << "Usage: " << executable << " enroll_1N|finalize_1N|search_1N|insert -c configDir -e enrollDir "
+    cerr << "Usage: " << executable << " enroll_1N|finalize_1N|search_1N|searchMulti_1N|insert -c configDir -e enrollDir "
             "-o outputDir -h outputStem -i inputFile -t numForks" << endl;
     exit(EXIT_FAILURE);
 }
@@ -332,7 +355,7 @@ initialize(
                     << ret.code << "." << endl;
             raise(SIGTERM);
         }
-    } else if (action == Action::Search_1N || action == Action::Insert) {
+    } else if (action == Action::Search_1N || action == Action::SearchMulti_1N || action == Action::Insert) {
         /* Initialize probe feature extraction */
         auto ret = implPtr->initializeTemplateCreation(configDir, TemplateRole::Search_1N);
         if (ret.code != ReturnCode::Success) {
@@ -357,10 +380,10 @@ main(int argc, char* argv[])
 {
     auto exitStatus = SUCCESS;
 
-    uint16_t currAPIMajorVersion{1},
+    uint16_t currAPIMajorVersion{2},
 	currAPIMinorVersion{0},
 	currStructsMajorVersion{1},
-	currStructsMinorVersion{1};
+	currStructsMinorVersion{2};
 
     /* Check versioning of both frvt_structs.h and API header file */
     if ((FRVT::FRVT_STRUCTS_MAJOR_VERSION != currStructsMajorVersion) ||
@@ -421,6 +444,7 @@ main(int argc, char* argv[])
         case Action::Enroll_1N:
         case Action::Finalize_1N:
         case Action::Search_1N:
+        case Action::SearchMulti_1N:
         case Action::Insert:
             break;
         default:
@@ -429,7 +453,7 @@ main(int argc, char* argv[])
     }
 
     auto implPtr = Interface::getImplementation();
-    if (action == Action::Enroll_1N || action == Action::Search_1N) {
+    if (action == Action::Enroll_1N || action == Action::Search_1N || action == Action::SearchMulti_1N) {
         /* Initialization */
         if (initialize(implPtr, configDir, enrollDir, action) != EXIT_SUCCESS)
             return EXIT_FAILURE;
@@ -456,13 +480,14 @@ main(int argc, char* argv[])
                             outputDir + "/" + outputFileStem + "." + mapActionToString[action] + "." + to_string(i),
                             outputDir + "/edb." + to_string(i),
                             outputDir + "/manifest." + to_string(i));
-                else if (action == Action::Search_1N)
+                else if (action == Action::Search_1N || action == Action::SearchMulti_1N)
                     return search(
                             implPtr,
                             configDir,
                             enrollDir,
                             inputFile,
-                            outputDir + "/" + outputFileStem + "." + mapActionToString[action] + "." + to_string(i));
+                            outputDir + "/" + outputFileStem + "." + mapActionToString[action] + "." + to_string(i),
+                            action);
             case -1: /* Error */
                 cerr << "Problem forking" << endl;
                 break;

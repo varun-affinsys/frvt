@@ -76,7 +76,7 @@ retEnrollment=$?
 kill -9 "$pid"
 wait "$pid" 2>/dev/null
 
-if [ $retEnrollment -eq 0 ]; then
+if [[ $retEnrollment == 0 ]]; then
 	echo "[SUCCESS]"
 	# Merge output files together
 	merge $outputDir/$outputStem enroll_1N
@@ -115,7 +115,7 @@ echo -n "Running Enrollment on Multiple Images per Subject (Single Process) "
 inputFile=input/enroll_1N_multiface.txt
 bin/validate1N enroll_1N -c $configDir -o $outputDir -h $outputStem -i $inputFile -t $numForks
 retEnrollment=$?
-if [ $retEnrollment -eq 0 ]; then
+if [[ $retEnrollment == 0 ]]; then
     echo "[SUCCESS]"
     # Merge output files together
     merge $outputDir/$outputStem enroll_1N
@@ -135,7 +135,7 @@ echo -n "Running Enrollment (Multiple Processes) "
 inputFile=input/enroll_1N.txt
 bin/validate1N enroll_1N -c $configDir -o $outputDir -h $outputStem -i $inputFile -t $numForks
 retEnrollment=$?
-if [ $retEnrollment -eq 0 ]; then
+if [[ $retEnrollment == 0 ]]; then
 	echo "[SUCCESS]"
 	# Merge output files together
 	merge $outputDir/$outputStem enroll_1N
@@ -152,7 +152,7 @@ echo -n "Running Finalization "
 # Finalization
 bin/validate1N finalize_1N -c $configDir -e $enrollDir -o $outputDir -h $outputStem
 retFinalize=$?
-if [ $retFinalize -eq 0 ]; then
+if [[ $retFinalize == 0 ]]; then
 	echo "[SUCCESS]"
 else
 	echo "${bold}[ERROR] Finalize validation failed${normal}"
@@ -176,7 +176,7 @@ echo -n "Running Search (Multiple Processes) "
 inputFile=input/search_1N.txt
 bin/validate1N search_1N -c $configDir -e $enrollDir -o $outputDir -h $outputStem -i $inputFile -t $numForks
 retSearch=$?
-if [ $retSearch -eq 0 ]; then
+if [[ $retSearch == 0 ]]; then
 	echo "[SUCCESS]"
 	# Merge output files together
 	merge $outputDir/$outputStem search_1N
@@ -186,22 +186,29 @@ else
 fi
 
 numForks=1
-echo -n "Running Insert Search (Single Process)"
+echo -n "Running Search on Multi-person Templates (Single Process) "
+# Search
+inputFile=input/search_1N_multiperson.txt
+bin/validate1N searchMulti_1N -c $configDir -e $enrollDir -o $outputDir -h $outputStem -i $inputFile -t $numForks
+retSearch=$?
+if [[ $retSearch == 0 ]]; then
+    echo "[SUCCESS]"
+    # Merge output files together
+    merge $outputDir/$outputStem searchMulti_1N
+else
+    echo "${bold}[ERROR] Search validation failed${normal}"
+    exit $failure
+fi
+
 # Insert Templates/Search
+echo -n "Running Insert (Single Process)"
 inputFile=input/insert.txt
 bin/validate1N insert -c $configDir -e $enrollDir -o $outputDir -h $outputStem -i $inputFile -t $numForks
 retInsert=$?
-if [ $retInsert -eq 0 ]; then
+if [[ $retInsert == 0 ]]; then
 	echo "[SUCCESS]"
 else
 	echo "${bold}[ERROR] Insert validation failed${normal}"
 	exit $failure
-fi
-
-echo "------------------------------"
-if [ $retEnrollment -eq 0 ] && [ $retFinalize -eq 0 ] && [ $retSearch -eq 0 ] && [ $retInsert -eq 0 ]; then
-	echo "Validation complete!"
-else
-	echo "There were errors during validation.  Please ensure you've followed the validation instructions in the README.txt file."
 fi
 

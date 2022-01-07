@@ -660,3 +660,5 @@
 1314 ../common/images/rotated180.ppm UNKNOWN
 1315 ../common/images/rotated90.ppm UNKNOWN
 1316 ../common/images/small.ppm UNKNOWN
+1317 ../common/images/IMG_9997.ppm MUGSHOT
+1318 ../common/images/IMG_9998.ppm MUGSHOT

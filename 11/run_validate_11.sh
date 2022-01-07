@@ -33,7 +33,7 @@ fi
 outputDir="validation"
 # Do some sanity checks against the output logs
 echo -n "Sanity checking validation output "
-for input in enroll verif match
+for input in enroll verif match match_multiperson
 do
 	numInputLines=$(cat input/$input.txt | wc -l)
 	numLogLines=$(sed '1d' $outputDir/$input.log | wc -l)

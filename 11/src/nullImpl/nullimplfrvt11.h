@@ -34,6 +34,13 @@ public:
             std::vector<FRVT::EyePair> &eyeCoordinates) override;
 
     FRVT::ReturnStatus
+    createTemplate(
+            const FRVT::Image &image,
+            FRVT::TemplateRole role,
+            std::vector<std::vector<uint8_t>> &templs,
+            std::vector<FRVT::EyePair> &eyeCoordinates) override;
+
+    FRVT::ReturnStatus
     matchTemplates(
             const std::vector<uint8_t> &verifTemplate,
             const std::vector<uint8_t> &enrollTemplate,

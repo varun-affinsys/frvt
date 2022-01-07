@@ -26,7 +26,7 @@ NullImplFRVT1N::~NullImplFRVT1N() {}
 ReturnStatus
 NullImplFRVT1N::initializeTemplateCreation(
     const std::string &configDir,
-    TemplateRole role)
+    FRVT::TemplateRole role)
 {
     // Load some stuff from the configuration directory, etc...
     return ReturnStatus(ReturnCode::Success);
@@ -34,10 +34,10 @@ NullImplFRVT1N::initializeTemplateCreation(
 
 ReturnStatus
 NullImplFRVT1N::createTemplate(
-    const Multiface &faces,
-    TemplateRole role,
+    const FRVT::Multiface &faces,
+    FRVT::TemplateRole role,
     std::vector<uint8_t> &templ,
-    std::vector<EyePair> &eyeCoordinates)
+    std::vector<FRVT::EyePair> &eyeCoordinates)
 {
     auto templString = std::to_string(faces.size()) +
             " Somewhere out there, beneath the pale moon light\n";
@@ -46,6 +46,28 @@ NullImplFRVT1N::createTemplate(
 
     for (unsigned int i=0; i<faces.size(); i++)
         eyeCoordinates.push_back(EyePair(true, true, i, i, i+1, i+1));
+
+    return ReturnStatus(ReturnCode::Success);
+}
+
+ReturnStatus
+NullImplFRVT1N::createTemplate(
+    const FRVT::Image &image,
+    FRVT::TemplateRole role,
+    std::vector<std::vector<uint8_t>> &templs,
+    std::vector<FRVT::EyePair> &eyeCoordinates)
+{
+    int numFaces = rand() % 4 + 1;
+    for (int i = 1; i <= numFaces; i++) {
+        auto templString = std::to_string(i) +
+            " Somewhere out there, beneath the pale moon light\n";
+        std::vector<uint8_t> templ;
+        templ.resize(templString.size());
+        memcpy(templ.data(), templString.c_str(), templString.size());
+        templs.push_back(templ);
+
+        eyeCoordinates.push_back(EyePair(true, true, i, i, i+1, i+1));
+    }
 
     return ReturnStatus(ReturnCode::Success);
 }
@@ -113,8 +135,14 @@ NullImplFRVT1N::identifyTemplate(
     for (auto const& element : this->templates)
         templateIds.push_back(element.first);
 
+    // initializeIdentification() may not have been called? 
+    if (templateIds.size() == 0) {
+        return ReturnStatus(ReturnCode::VendorError, "Enrollment template vector is empty!");
+    }
+
+    auto randomScore = rand() % 100 + 1;    
     for (unsigned int i=0; i<candidateListLength; i++) {
-        candidateList.push_back(Candidate(true, templateIds[i%(templateIds.size())], candidateListLength-i));
+        candidateList.push_back(Candidate(true, templateIds[i%(templateIds.size())], randomScore/(i+1)));
     }
     decision = true;
 
