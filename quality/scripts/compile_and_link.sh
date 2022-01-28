@@ -1,6 +1,6 @@
 #!/bin/bash
-success=0
-failure=1
+
+source ../common/scripts/utils.sh
 
 FRVTLIB="libfrvt_quality_<company>_<three digit sequence>.so"
 root=$(pwd)

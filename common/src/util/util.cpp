@@ -166,11 +166,13 @@ std::map<std::string, Action> mapStringToAction =
 {
     /* 1:1 */
     { "createTemplate", Action::CreateTemplate },
+    { "createMultiTemplates", Action::CreateMultiTemplates },
     { "match", Action::Match },
     /* 1:N */
     { "enroll_1N", Action::Enroll_1N },
     { "finalize_1N", Action::Finalize_1N },
     { "search_1N", Action::Search_1N },
+    { "searchMulti_1N", Action::SearchMulti_1N },
     { "insert", Action::Insert },
     /* MORPH */
     { "detectNonScannedMorph", Action::DetectNonScannedMorph },
@@ -192,11 +194,13 @@ std::map<Action, std::string> mapActionToString =
 {
     /* 1:1 */
     { Action::CreateTemplate, "createTemplate" },
+    { Action::CreateMultiTemplates, "createMultiTemplates" },
     { Action::Match, "match" },
     /* 1:N */
     { Action::Enroll_1N, "enroll_1N" },
     { Action::Finalize_1N, "finalize_1N" },
     { Action::Search_1N, "search_1N" },
+    { Action::SearchMulti_1N, "searchMulti_1N" },
     { Action::Insert, "insert" },
     /* MORPH */
     { Action::DetectNonScannedMorph, "detectNonScannedMorph" },

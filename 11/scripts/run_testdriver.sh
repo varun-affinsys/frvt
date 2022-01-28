@@ -1,28 +1,6 @@
 #!/bin/bash
 
-success=0
-failure=1
-
-bold=$(tput bold)
-normal=$(tput sgr0)
-
-# Function to merge output files together
-# merge "filename"
-function merge() {
-        name=$1; shift; suffixes="$*"
-        for suffix in $suffixes
-        do
-                tmp=`dirname $name`
-                tmp=$tmp/tmp.txt
-                firstfile=`ls ${name}.${suffix}.* | head -n1`
-                # Get header
-                head -n1 $firstfile > $tmp
-                sed -i "1d" ${name}.${suffix}.*
-                cat ${name}.${suffix}.* >> $tmp
-                mv $tmp ${name}.${suffix}
-                rm -rf ${name}.${suffix}.*
-        done
-}
+source ../common/scripts/utils.sh
 
 # Make sure there aren't any zombie processes
 # left over from previous validation run
@@ -41,11 +19,12 @@ mkdir -p $templatesDir
 
 # Usage: ../bin/validate11 createTemplate|match [-x enroll|verif] -c configDir -o outputDir -h outputStem -i inputFile -t numForks -j templatesDir
 #
-#   createTemplate|match: task to process
-#		createTemplate: generate templates
-#			enroll: generate enrollment templates
-#			verif: generate verification templates
-#		match: perform matching of templates
+#   createTemplate|createMultiTemplates|match: task to process
+#	    createTemplate: generate single template from one or more images of the same person
+#       createMultiTemplates : generate multiple templates of one or more people from a single image
+#	        - enroll: generate enrollment templates
+#	        - verif: generate verification templates
+#	    match: perform matching of templates
 #
 #   configDir: configuration directory
 #   outputDir: directory where output logs are written to
@@ -56,7 +35,7 @@ mkdir -p $templatesDir
 echo "------------------------------"
 echo " Running 1:1 validation"
 echo "------------------------------"
-
+    
 # Set number of child processes to fork()
 numForks=1
 inputFile=input/short_enroll.txt
@@ -68,21 +47,21 @@ chmod 775 $configDir; mv $configDir $tempConfigDir; chmod 550 $tempConfigDir
 bin/validate11 createTemplate -x enroll -c $tempConfigDir -o $outputDir -h $outputStem -i $inputFile -t $numForks -j $templatesDir
 retEnroll=$?
 if [[ $retEnroll == 0 ]]; then
-        echo "[SUCCESS]" 
-        # Merge output files together
-        merge $outputDir/$outputStem log
+    echo "[SUCCESS]" 
+    # Merge output files together
+    merge $outputDir/$outputStem log
 else
 	chmod 775 $tempConfigDir
 	mv $tempConfigDir $configDir
-        echo "[ERROR] Detection of hard-coded config directory in your software.  Please fix!"
-        exit $failure
+    echo "[ERROR] Detection of hard-coded config directory in your software.  Please fix!"
+    exit $failure
 fi
 rm -rf $outputDir; mkdir -p $templatesDir
 chmod 775 $tempConfigDir; mv $tempConfigDir $configDir; chmod 550 $configDir
 
 echo -n "Creating Enrollment Templates (Single Process) "
 # Start checking for threading
-scripts/count_threads.sh $outputDir/thread.log & pid=$!
+../common/scripts/count_threads.sh validate11 $outputDir/thread.log & pid=$!
 
 inputFile=input/enroll.txt
 bin/validate11 createTemplate -x enroll -c $configDir -o $outputDir -h $outputStem -i $inputFile -t $numForks -j $templatesDir
@@ -109,7 +88,7 @@ fi
 rm -rf $outputDir; mkdir -p $templatesDir
 
 echo -n "Creating Enrollment Templates on Multiple Images per Subject (Single Process) "
-inputFile=input/enroll_11_multiface.txt
+inputFile=input/enroll_multiface.txt
 bin/validate11 createTemplate -x enroll -c $configDir -o $outputDir -h $outputStem -i $inputFile -t $numForks -j $templatesDir
 retEnroll=$?
 if [ $retEnroll -eq 0 ]; then
@@ -164,7 +143,36 @@ else
 	exit $failure
 fi
 
-if [[ $retEnroll != 0 ]] || [[ $retVerif != 0 ]] || [[ $retMatch != 0 ]]; then
-	echo "${bold}There were errors during validation.  Please investigate and re-run this script.  Please ensure you've followed the validation instructions in the README.txt file.${normal}"
+echo -n "Creating Verification Templates for Multiple Persons Detected in an Image (Single Process) "
+outputStem=verif_multiperson
+inputFile=input/$outputStem.txt
+numForks=1
+bin/validate11 createMultiTemplates -x verif -c $configDir -o $outputDir -h $outputStem -i $inputFile -t $numForks -j $templatesDir
+retVerifMulti=$?
+if [[ $retVerifMulti == 0 ]]; then
+    echo "[SUCCESS]"
+    # Merge output files together
+    merge $outputDir/$outputStem log
+else
+    echo "${bold}[ERROR] Enrollment validation (multiple persons in image) failed${normal}"
+    exit $failure
 fi
 
+echo -n "Matching Multi-person Templates (Single Process) "
+inputFileMulti=input/match_multiperson.txt
+rm -f $inputFileMulti
+sed '1d' $inputFile | awk '{ print $1 }' | while read line
+do
+    grep "${line}_" $outputDir/$outputStem.log | awk -v enroll=$line '{ print enroll".template " $1".template" }' >> $inputFileMulti
+done
+outputStem=match_multiperson
+bin/validate11 match -c $configDir -o $outputDir -h $outputStem -i $inputFileMulti -t $numForks -j $templatesDir
+retMatch=$?
+if [[ $retMatch == 0 ]]; then
+	echo "[SUCCESS]"
+	# Merge output files together
+	merge $outputDir/$outputStem log
+else
+	echo "${bold}[ERROR] Match validation failed${normal}"
+	exit $failure
+fi

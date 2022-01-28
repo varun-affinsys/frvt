@@ -5,5 +5,5 @@ set(CMAKE_BUILD_TYPE Release)
 # Build libraries
 #add_subdirectory(src/nullImpl)
 
-# Build test driver
+# Build testdriver
 add_subdirectory(src/testdriver)

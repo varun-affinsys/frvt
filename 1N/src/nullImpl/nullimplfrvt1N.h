@@ -37,6 +37,13 @@ public:
         std::vector<FRVT::EyePair> &eyeCoordinates) override;
 
     FRVT::ReturnStatus
+    createTemplate(
+        const FRVT::Image &image,
+        FRVT::TemplateRole role,
+        std::vector<std::vector<uint8_t>> &templs,
+        std::vector<FRVT::EyePair> &eyeCoordinates) override;
+
+    FRVT::ReturnStatus
     finalizeEnrollment(
         const std::string &configDir,
         const std::string &enrollmentDir,
