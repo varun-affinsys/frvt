@@ -1,6 +1,6 @@
 
 # Face Recognition Vendor Test (FRVT) Quality Vector Updates
-This branch contains draft updates to the [FRVT Quality] (https://pages.nist.gov/frvt/html/frvt_quality.html) API.    
+This branch contains draft updates to the [FRVT Quality](https://pages.nist.gov/frvt/html/frvt_quality.html) API.    
 
 # API updates
 A new vectorQuality() function has been proposed to evaluate algorithms capable of detecting specific defects in images (such as non-frontal head orientation).
