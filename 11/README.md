@@ -1,7 +1,8 @@
 # FRVT 1:1 validation package
 The purpose of this validation package is to
-1) ensure that NIST's execution of your library submission produces the expected output and
-2) prepare your submission package to send to NIST
+1) validate that your software adheres to the [FRVT 1:1 API](https://pages.nist.gov/frvt/api/FRVT_ongoing_11_api.pdf),
+2) ensure that NIST's execution of your library submission produces the expected output, and
+3) prepare your submission package to send to NIST
 
 The code provided here is meant only for validation purposes and does not reflect how NIST will perform actual testing.  Please note that this validation package must be installed and run on Ubuntu 20.04.3, which can be downloaded from https://nigos.nist.gov/evaluations/ubuntu-20.04.3-live-server-amd64.iso.
 
