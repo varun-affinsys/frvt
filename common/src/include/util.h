@@ -81,11 +81,13 @@ readImage(const std::string &file, FRVT::Image &image);
 enum class Action {
 	/* 1:1 */
     CreateTemplate,
+    CreateMultiTemplates,
     Match,
 	/* 1:N */
     Enroll_1N,
     Finalize_1N,
     Search_1N,
+    SearchMulti_1N,
     Insert,
 	/* MORPH */
     DetectNonScannedMorph,

@@ -1,12 +1,12 @@
 # FRVT Quality Assessment validation package
 The purpose of this validation package is to
-1) ensure that NIST's execution of your library submission produces the expected output and
-2) prepare your submission package to send to NIST
+1) validate that your software adheres to the [FRVT Quality Assessent API](https://pages.nist.gov/frvt/api/FRVT_ongoing_quality_api.pdf),
+2) ensure that NIST's execution of your library submission produces the expected output, and
+3) prepare your submission package to send to NIST
 
-The code provided here is meant only for validation purposes and does not reflect how NIST will perform actual testing.  Please note that this validation package must be installed and run on Centos 8.2, which can be downloaded from https://nigos.nist.gov/evaluations/CentOS-8.2.2004-x86_64-dvd1.iso.
+The code provided here is meant only for validation purposes and does not reflect how NIST will perform actual testing.  Please note that this validation package must be installed and run on Ubuntu 20.04.3, which can be downloaded from https://nigos.nist.gov/evaluations/ubuntu-20.04.3-live-server-amd64.iso.
 
 # Validation Dataset
-
 The ../common/images directory will contain all of the images necessary for validation.
 
 NOTE: The validation images are used for the sole purpose of validation and stress-testing your software.  The images are not necessarily representative of actual test data that will be used to evaluate the implementations.  Please do not contact NIST about actual testing with such validation-type imagery.
@@ -24,6 +24,10 @@ This will place the implementation library into ./lib.
 # Validation and Submission Preparation
 To successfully complete the validation process, and to prepare your submission package to send to NIST, please perform the following steps:
 
+0) [OPTIONAL] There is a script located in ../common/scripts/install_packages.sh that contains a long list of packages and their exact versions as installed on our evaluation machines.  For those who are interested, this script may be run to mirror our evaluation environment.
+
+Note that this step is not required, because many of the packages listed are not required to run validation.  Any package required to execute the validation software will be installed by the validation script in step #4 as necessary.
+
 1) Put all required configuration files into ./config
 
 2) Put your core implementation library and ALL dependent libraries into ./lib
@@ -34,11 +38,12 @@ To successfully complete the validation process, and to prepare your submission 
 ````console
 $ ./run_validate_quality.sh
 ````
-The validation script will
-- Compile and link your library against the validation test harness.
-- Run the test harness that was built against your library on the validation
-  dataset.
-- Prepare your submission archive.
+    The validation script will
+    - Install required packages that don't already exist on your system.  You will need sudo rights and connection to the Internet for this.
+    - Compile and link your library against the validation test harness.
+    - Run the test harness that was built against your library on the validation
+      dataset.
+    - Prepare your submission archive.
 
 5) Upon successful validation, an archive will be generated named libfrvt_quality_\<company\>_\<three-digit submission sequence\>.tar.gz
 

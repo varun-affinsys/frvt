@@ -94,6 +94,12 @@ createTemplate(
         vector<uint8_t> templ;
         vector<EyePair> eyes;
         auto ret = implPtr->createTemplate(faces, role, templ, eyes);
+        
+        /* Check that function is implemented */
+        if (ret.code == ReturnCode::NotImplemented) {
+            cerr << "[ERROR] The createTemplate(faces, role, templ, eyes) function returned ReturnCode::NotImplemented.  This function must be implemented!" << std::endl;
+            raise(SIGTERM);
+        }
 
         /* Open template file for writing */
         string templFile{id + ".template"};
@@ -107,12 +113,113 @@ createTemplate(
         templStream.write((char*)templ.data(), templ.size());
 
         /* Write template stats to log */
-        for (unsigned int i=0; i<faces.size(); i++) {
+        for (unsigned int i = 0; i< faces.size(); i++) {
             string imagePath = tokens[(i*2)+1];
             logStream << id << " "
                 << imagePath << " "
                 << templ.size() << " "
                 << static_cast<std::underlying_type<ReturnCode>::type>(ret.code) << " "
+                << (eyes.size() > 0 ? eyes[i].isLeftAssigned : false) << " "
+                << (eyes.size() > 0 ? eyes[i].isRightAssigned : false) << " "
+                << (eyes.size() > 0 ? eyes[i].xleft : 0) << " "
+                << (eyes.size() > 0 ? eyes[i].yleft : 0) << " "
+                << (eyes.size() > 0 ? eyes[i].xright : 0) << " "
+                << (eyes.size() > 0 ? eyes[i].yright : 0)
+                << endl;
+        }
+    }
+    inputStream.close();
+
+    /* Remove the input file */
+    if( remove(inputFile.c_str()) != 0 )
+        cerr << "Error deleting file: " << inputFile << endl;
+
+    return SUCCESS;
+}
+
+int
+createMultiTemplates(
+        std::shared_ptr<Interface> &implPtr,
+        const string &inputFile,
+        const string &outputLog,
+        const string &templatesDir,
+        TemplateRole role)
+{
+    /* Read input file */
+    ifstream inputStream(inputFile);
+    if (!inputStream.is_open()) {
+        cerr << "[ERROR] Failed to open stream for " << inputFile << "." << endl;
+        raise(SIGTERM);
+    }
+
+    /* Open output log for writing */
+    ofstream logStream(outputLog);
+    if (!logStream.is_open()) {
+        cerr << "[ERROR] Failed to open stream for " << outputLog << "." << endl;
+        raise(SIGTERM);
+    }
+
+    /* header */
+    logStream << "id image templateSizeBytes returnCode numDetections detectionIndex isLeftEyeAssigned "
+            "isRightEyeAssigned xleft yleft xright yright" << endl;
+
+    string id, line; 
+    while (std::getline(inputStream, line)) {
+        auto tokens = split(line, ' ');
+        id = tokens[0];
+        // Get number of image entries in line
+        auto numImages = (tokens.size() - 1)/2;
+        if (numImages != 1) {
+            cerr << "[ERROR] Entries for createMultiTemplates should only contain a single image." << endl;
+            raise(SIGTERM);
+        }
+        Image image;
+        string imagePath = tokens[1];
+        string desc = tokens[2];
+        if (!readImage(imagePath, image)) {
+            cerr << "[ERROR] Failed to load image file: " << imagePath << "." << endl;
+            raise(SIGTERM);
+        }
+        image.description = mapStringToImgLabel[desc];
+
+        vector<vector<uint8_t>> templs;
+        vector<EyePair> eyes;
+        auto ret = implPtr->createTemplate(image, role, templs, eyes);
+
+        /* Check that function is implemented */
+        if (ret.code == ReturnCode::NotImplemented) {
+            cerr << "[ERROR] The createTemplate(image, role, templs, eyes) function returned ReturnCode::NotImplemented.  This function must be implemented!" << std::endl;
+            raise(SIGTERM);
+        }
+
+        if (templs.size() == 0) {
+            cerr << "[ERROR] The output template vector must contain at least one template." << endl;
+            raise(SIGTERM);
+        }
+        if (templs.size() != eyes.size()) {
+            cerr << "[ERROR] The number of eye coordinates do not match the number of templates." << endl;
+            raise(SIGTERM);
+        }
+
+        for (unsigned int i = 0; i < templs.size(); i++) {
+            /* Open template file for writing */
+            string templFile{id + "_" + to_string(i) + ".template"};
+            ofstream templStream(templatesDir + "/" + templFile);
+            if (!templStream.is_open()) {
+                cerr << "[ERROR] Failed to open stream for " << templatesDir + "/" + templFile << "." << endl;
+                raise(SIGTERM);
+            }
+            /* Write template file */
+            auto templ = templs[i];
+            templStream.write((char*)templ.data(), templ.size());
+
+            /* Write template stats to log */
+            logStream << id << "_" << i << " "
+                << imagePath << " "
+                << templ.size() << " "
+                << static_cast<std::underlying_type<ReturnCode>::type>(ret.code) << " "
+                << templs.size() << " "
+                << i << " "
                 << (eyes.size() > 0 ? eyes[i].isLeftAssigned : false) << " "
                 << (eyes.size() > 0 ? eyes[i].isRightAssigned : false) << " "
                 << (eyes.size() > 0 ? eyes[i].xleft : 0) << " "
@@ -206,10 +313,10 @@ main(
 {
     auto exitStatus = SUCCESS;
 
-    uint16_t currAPIMajorVersion{4},
+    uint16_t currAPIMajorVersion{5},
 		currAPIMinorVersion{0},
 		currStructsMajorVersion{1},
-		currStructsMinorVersion{1};
+		currStructsMinorVersion{2};
 
     /* Check versioning of both frvt_structs.h and API header file */
 	if ((FRVT::FRVT_STRUCTS_MAJOR_VERSION != currStructsMajorVersion) ||
@@ -271,6 +378,7 @@ main(
     Action action = mapStringToAction[actionstr];
     switch (action) {
         case Action::CreateTemplate:
+        case Action::CreateMultiTemplates:
         case Action::Match:
             break;
         default:
@@ -279,7 +387,7 @@ main(
     }
 
     TemplateRole role{};
-    if (action == Action::CreateTemplate) {
+    if (action == Action::CreateTemplate || action == Action::CreateMultiTemplates) {
     	if (roleStr == "enroll")
     		role = TemplateRole::Enrollment_11;
     	else if (roleStr == "verif")
@@ -306,7 +414,7 @@ main(
         cerr << "[ERROR] An error occurred with processing the input file." << endl;
         return FAILURE;
     }
-
+    
     bool parent = false;
 	int i = 0;
     for (auto &inputFile : inputFileVector) {
@@ -320,6 +428,13 @@ main(
 						outputDir + "/" + outputFileStem + ".log." + to_string(i),
 						templatesDir,
 						role);
+            else if (action == Action::CreateMultiTemplates)
+                return createMultiTemplates(
+                        implPtr,
+                        inputFile,
+                        outputDir + "/" + outputFileStem + ".log." + to_string(i),
+                        templatesDir,
+                        role);
 			else if (action == Action::Match)
 				return match(
 						implPtr,

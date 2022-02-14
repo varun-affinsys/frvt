@@ -8,6 +8,7 @@
  * about its quality, reliability, or any other characteristic.
  */
 
+#include <algorithm>
 #include <cstring>
 #include <cstdlib>
 
@@ -41,10 +42,36 @@ NullImplFRVT11::createTemplate(
     templ.resize(dataSize);
     memcpy(templ.data(), bytes, dataSize);
 
-    for (unsigned int i=0; i<faces.size(); i++) {
+    for (unsigned int i = 0; i < faces.size(); i++) {
         eyeCoordinates.push_back(EyePair(true, true, i, i, i+1, i+1));
     }
 
+    return ReturnStatus(ReturnCode::Success);
+}
+
+ReturnStatus
+NullImplFRVT11::createTemplate(
+    const FRVT::Image &image,
+    FRVT::TemplateRole role,
+    std::vector<std::vector<uint8_t>> &templs,
+    std::vector<FRVT::EyePair> &eyeCoordinates)
+{
+    int numFaces = rand() % 4 + 1;
+    for (int i = 1; i <= numFaces; i++) {
+        std::vector<uint8_t> templ;
+        /* Note: example code, potentially not portable across machines. */
+        std::vector<float> fv = {1.0, 2.0, 8.88, 765.88989};
+        /* Multiply vector values by scalar */
+        for_each(fv.begin(), fv.end(), [i](float &f){ f *= i; });
+        const uint8_t* bytes = reinterpret_cast<const uint8_t*>(fv.data());
+        int dataSize = sizeof(float) * fv.size();
+        templ.resize(dataSize);
+        memcpy(templ.data(), bytes, dataSize);
+        templs.push_back(templ);
+
+        eyeCoordinates.push_back(EyePair(true, true, i, i, i+1, i+1));
+    } 
+    
     return ReturnStatus(ReturnCode::Success);
 }
 

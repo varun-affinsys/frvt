@@ -1,28 +1,6 @@
 #!/bin/bash
 
-success=0
-failure=1
-
-bold=$(tput bold)
-normal=$(tput sgr0)
-
-# Function to merge output files together
-# merge "filename"
-function merge() {
-        name=$1; shift; suffixes="$*"
-        for suffix in $suffixes
-        do
-                tmp=`dirname $name`
-                tmp=$tmp/tmp.txt
-                firstfile=`ls ${name}.${suffix}.* | head -n1`
-                # Get header
-                head -n1 $firstfile > $tmp
-                sed -i "1d" ${name}.${suffix}.*
-                cat ${name}.${suffix}.* >> $tmp
-                mv $tmp ${name}.${suffix}
-                rm -rf ${name}.${suffix}.* $tmp
-        done
-}
+source ../common/scripts/utils.sh
 
 configDir=config
 configValue=""

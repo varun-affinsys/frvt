@@ -54,7 +54,8 @@ public:
         FRVT::TemplateRole role) = 0;
 
     /**
-     * @brief This function takes an input Multiface and outputs a template
+     * @brief This function supports template generation from one or more images of
+     * exactly one person.  It takes an input Multiface and outputs a template
      * and associated eye coordinates
      *
      * @details For enrollment templates: If the function
@@ -73,7 +74,7 @@ public:
      * non-successful return status, the output template will be not be used
      * in subsequent search operations.
      *
-     * In the event that more than one face is detected in an image,
+     * In the rare event that more than one face is detected in an image,
      * features should be extracted from the foreground face, that is, the
      * largest face in the image.
      *
@@ -97,6 +98,48 @@ public:
         const FRVT::Multiface &faces,
         FRVT::TemplateRole role,
         std::vector<uint8_t> &templ,
+        std::vector<FRVT::EyePair> &eyeCoordinates) = 0;
+
+    /**
+     * @brief This function supports template generation of one or more people detected
+     * from a single image.  It takes a single input image and outputs one or more proprietary
+     * templates and associated eye coordinates based on the number of people detected.
+     *
+     * @details For enrollment templates: If the function
+     * executes correctly (i.e. returns a successful exit status),
+     * the template(s) will be enrolled into a gallery.  The NIST
+     * calling application may store the resulting template(s),
+     * concatenate many templates, and pass the result to the enrollment
+     * finalization function.  The resulting template(s) may also
+     * be inserted immediately into a previously finalized gallery.
+     * When the implementation fails to produce a
+     * template, it shall still return a blank template (which can be zero
+     * bytes in length). The template will be included in the
+     * enrollment database/manifest like all other enrollment templates, but
+     * is not expected to contain any feature information.
+     * <br>For identification templates: If the function returns a
+     * non-successful return status, the output template(s) will be not be used
+     * in subsequent search operations.
+     *
+     * param[in] image
+     * A single image that contains one or more people in the photo
+     * param[in] role
+     * Label describing the type/role of the template to be generated
+     * param[out] templs
+     * A vector of output template(s).  The format of the template(s) is entirely
+     * unregulated.  This will be an empty vector when passed into the function, and
+     * the implementation can resize and populate it with the appropriate data.
+     * param[out] eyeCoordinates
+     * For each person detected in the image, the function shall return the
+     * estimated eye centers. This will be an empty vector when passed into the
+     * function, and the implementation shall populate it with the appropriate
+     * number of entries.  Values in eyeCoordinates[i] shall correspond to templs[i].
+     */    
+    virtual FRVT::ReturnStatus
+    createTemplate(
+        const FRVT::Image &image,
+        FRVT::TemplateRole role,
+        std::vector<std::vector<uint8_t>> &templ,
         std::vector<FRVT::EyePair> &eyeCoordinates) = 0;
 
      /**
@@ -256,7 +299,7 @@ extern uint16_t API_MAJOR_VERSION;
 extern uint16_t API_MINOR_VERSION;
 #else /* NIST_EXTERN_API_VERSION */
 /** API major version number. */
-uint16_t API_MAJOR_VERSION{1};
+uint16_t API_MAJOR_VERSION{2};
 /** API minor version number. */
 uint16_t API_MINOR_VERSION{0};
 #endif /* NIST_EXTERN_API_VERSION */

@@ -49,7 +49,8 @@ public:
     initialize(const std::string &configDir) = 0;
 
     /**
-     * @brief This function takes a Multiface and outputs a proprietary template
+     * @brief This function supports template generation from one or more images of 
+     * exactly one person.  It takes a Multiface and outputs a proprietary template
      * and associated eye coordinates.  The vectors to store the template and
      * eye coordinates will be initially empty, and it is up to the implementation
      * to populate them with the appropriate data.  In all cases, even when unable
@@ -78,6 +79,38 @@ public:
         const FRVT::Multiface &faces,
         FRVT::TemplateRole role,
         std::vector<uint8_t> &templ,
+        std::vector<FRVT::EyePair> &eyeCoordinates) = 0;
+
+    /**
+     * @brief This function supports template generation of one or more people detected 
+     * from a single image.  It takes a single input image and outputs one or more proprietary 
+     * templates and associated eye coordinates based on the number of people detected.  
+     * The vectors to store the template(s) and eye coordinates will be initially empty, 
+     * and it is up to the implementation to populate them with the appropriate data.  
+     * If the implementation is unable to extract features, the output shall still contain a 
+     * single template that may be passed to the match_templates function without error.  
+     * That is, this routine must internally encode "template creation failed" and the 
+     * matcher must transparently handle this.
+     *
+     * param[in] image
+     * A single image that contains one or more people in the photo
+     * param[in] role
+     * Label describing the type/role of the template to be generated
+     * param[out] templs
+     * A vector of output template(s).  The format of the template(s) is entirely 
+     * unregulated.  This will be an empty vector when passed into the function, and 
+     * the implementation can resize and populate it with the appropriate data.
+     * param[out] eyeCoordinates
+     * For each person detected in the image, the function shall return the
+     * estimated eye centers. This will be an empty vector when passed into the
+     * function, and the implementation shall populate it with the appropriate
+     * number of entries.  Values in eyeCoordinates[i] shall correspond to templs[i].
+     */
+    virtual FRVT::ReturnStatus
+    createTemplate(
+        const FRVT::Image &image,
+        FRVT::TemplateRole role,
+        std::vector<std::vector<uint8_t>> &templs,
         std::vector<FRVT::EyePair> &eyeCoordinates) = 0;
 
     /**
@@ -134,7 +167,7 @@ extern uint16_t API_MAJOR_VERSION;
 extern uint16_t API_MINOR_VERSION;
 #else /* NIST_EXTERN_API_VERSION */
 /** API major version number. */
-uint16_t API_MAJOR_VERSION{4};
+uint16_t API_MAJOR_VERSION{5};
 /** API minor version number. */
 uint16_t API_MINOR_VERSION{0};
 #endif /* NIST_EXTERN_API_VERSION */
