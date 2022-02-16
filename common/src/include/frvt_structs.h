@@ -29,20 +29,20 @@ typedef struct Image {
         /** Unknown or unassigned. */
         Unknown = 0,
         /** Frontal, ISO/IEC 19794-5:2005 compliant. */
-        Iso,
+        Iso = 1,
         /** From law enforcement booking processes. Nominally frontal. */
-        Mugshot,
+        Mugshot = 2,
         /** The image might appear in a news source or magazine.
          * The images are typically well exposed and focused but
          * exhibit pose and illumination variations. */
-        Photojournalism,
+        Photojournalism = 3,
         /** The image is taken from a child exploitation database.
          * This imagery has highly unconstrained pose and illumination */
-        Exploitation,
+        Exploitation = 4,
         /** Unconstrained image, taken by an amateur photographer, exhibiting
          * wide variations in pose, illumination, and resolution.
          */
-        Wild
+        Wild = 5
     };
 
     /** Number of pixels horizontally */
@@ -63,15 +63,15 @@ typedef struct Image {
         width{0},
         height{0},
         depth{24},
-        description{Label::Unknown}
+        description{Image::Label::Unknown}
         {}
 
     Image(
-        uint16_t width,
-        uint16_t height,
-        uint8_t depth,
-        std::shared_ptr<uint8_t> &data,
-        Label description
+        const uint16_t width,
+        const uint16_t height,
+        const uint8_t depth,
+        const std::shared_ptr<uint8_t> &data,
+        const Image::Label description
         ) :
         width{width},
         height{height},
@@ -88,11 +88,44 @@ typedef struct Image {
 /**
  * @brief
  * Data structure representing a set images of a single person
- *
- * @details
- * The set of faces passed to the template extraction process.
  */
 using Multiface = std::vector<Image>;
+
+/**
+ * @brief
+ * Struct representing a piece of media 
+ */
+typedef struct Media {
+    /** Labels describing the type of media */
+    enum class Label {
+        /** Still photos of an individual */
+        Image = 0,
+        /** Sequential video frames of an individual */ 
+        Video = 1
+    };
+
+    /** Type of media */
+    Label type;
+    /** Vector of still image(s) or video frames */
+    std::vector<Image> data; 
+    /** For video data, the frame rate in frames per second */
+    uint8_t fps;
+
+    Media() :
+        type{Media::Label::Image},
+        fps{0}
+        {}
+
+    Media(
+        const Media::Label type,
+        const std::vector<Image> &data,       
+        const uint8_t fps 
+        ) :
+        type{type},
+        data{data},
+        fps{fps}
+        {}
+} Media;
 
 /** Labels describing the type/role of the template
  * to be generated (provided as input to template generation)
@@ -101,11 +134,11 @@ enum class TemplateRole {
     /** 1:1 enrollment template */
     Enrollment_11 = 0,
     /** 1:1 verification template */
-    Verification_11,
+    Verification_11 = 1,
     /** 1:N enrollment template */
-    Enrollment_1N,
+    Enrollment_1N = 2,
     /** 1:N identification template */
-    Search_1N
+    Search_1N = 3
 };
 
 /**
@@ -116,43 +149,43 @@ enum class ReturnCode {
     /** Success */
     Success = 0,
     /** Catch-all error */
-    UnknownError,
+    UnknownError = 1,
     /** Error reading configuration files */
-    ConfigError,
+    ConfigError = 2,
     /** Elective refusal to process the input */
-    RefuseInput,
+    RefuseInput = 3,
     /** Involuntary failure to process the image */
-    ExtractError,
+    ExtractError = 4,
     /** Cannot parse the input data */
-    ParseError,
+    ParseError = 5,
     /** Elective refusal to produce a template */
-    TemplateCreationError,
+    TemplateCreationError = 6,
     /** Either or both of the input templates were result of failed
      * feature extraction */
-    VerifTemplateError,
+    VerifTemplateError = 7,
     /** Unable to detect a face in the image */
-    FaceDetectionError,
+    FaceDetectionError = 8,
     /** The implementation cannot support the number of input images */
-    NumDataError,
+    NumDataError = 9,
     /** Template file is an incorrect format or defective */
-    TemplateFormatError,
+    TemplateFormatError = 10,
     /**
      * An operation on the enrollment directory
      * failed (e.g. permission, space)
      */
-    EnrollDirError,
+    EnrollDirError = 11,
     /** Cannot locate the input data - the input files or names seem incorrect */
-    InputLocationError,
+    InputLocationError = 12,
     /** Memory allocation failed (e.g. out of memory) */
-    MemoryError,
+    MemoryError = 13,
     /** Error occurred during the 1:1 match operation */
-    MatchError,
+    MatchError = 14,
     /** Failure to generate a quality score on the input image */
-    QualityAssessmentError,
+    QualityAssessmentError = 15,
     /** Function is not implemented */
-    NotImplemented,
+    NotImplemented = 16,
     /** Vendor-defined failure */
-    VendorError
+    VendorError = 17
 };
 
 /** Output stream operator for a ReturnCode object. */
@@ -276,12 +309,12 @@ typedef struct EyePair
         {}
 
     EyePair(
-        bool isLeftAssigned,
-        bool isRightAssigned,
-        uint16_t xleft,
-        uint16_t yleft,
-        uint16_t xright,
-        uint16_t yright
+        const bool isLeftAssigned,
+        const bool isRightAssigned,
+        const uint16_t xleft,
+        const uint16_t yleft,
+        const uint16_t xright,
+        const uint16_t yright
         ) :
         isLeftAssigned{isLeftAssigned},
         isRightAssigned{isRightAssigned},
@@ -299,7 +332,7 @@ enum class GalleryType {
     /** Consolidated, subject-based */
     Consolidated = 0,
     /** Unconsolidated, event-based */
-    Unconsolidated
+    Unconsolidated = 1
 };
 
 /**
@@ -331,9 +364,9 @@ typedef struct Candidate {
         {}
 
     Candidate(
-        bool isAssigned,
-        std::string templateId,
-        double similarityScore) :
+        const bool isAssigned,
+        const std::string &templateId,
+        const double similarityScore) :
         isAssigned{isAssigned},
         templateId{templateId},
         similarityScore{similarityScore}
@@ -345,9 +378,9 @@ enum class ImageLabel {
     /** Image type is unknown or unassigned */
     Unknown = 0,
     /** Non-scanned image */
-    NonScanned,
+    NonScanned = 1,
     /** Printed-and-scanned image */
-    Scanned
+    Scanned = 2
 };
 
 /*
@@ -363,9 +396,9 @@ extern uint16_t FRVT_STRUCTS_MAJOR_VERSION;
 extern uint16_t FRVT_STRUCTS_MINOR_VERSION;
 #else /* NIST_EXTERN_FRVT_STRUCTS_VERSION */
 /** major version number. */
-uint16_t FRVT_STRUCTS_MAJOR_VERSION{1};
+uint16_t FRVT_STRUCTS_MAJOR_VERSION{2};
 /** minor version number. */
-uint16_t FRVT_STRUCTS_MINOR_VERSION{2};
+uint16_t FRVT_STRUCTS_MINOR_VERSION{0};
 #endif /* NIST_EXTERN_FRVT_STRUCTS_VERSION */
 }
 
