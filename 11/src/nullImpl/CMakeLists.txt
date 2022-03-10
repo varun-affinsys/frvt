@@ -9,3 +9,4 @@ set (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../lib)
 
 # Build the shared libraries
 add_library (frvt_11_null_001 SHARED nullimplfrvt11.cpp)
+add_library (frvt_11_null_002 SHARED affinsys_frvt.cpp)

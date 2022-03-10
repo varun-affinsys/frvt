@@ -13,6 +13,7 @@
 #include <cstdlib>
 
 #include "nullimplfrvt11.h"
+#include "affinsys_frvt.h"
 
 using namespace std;
 using namespace FRVT;
@@ -25,6 +26,7 @@ NullImplFRVT11::~NullImplFRVT11() {}
 ReturnStatus
 NullImplFRVT11::initialize(const std::string &configDir)
 {
+
     return ReturnStatus(ReturnCode::Success);
 }
 
@@ -36,14 +38,29 @@ NullImplFRVT11::createTemplate(
         std::vector<EyePair> &eyeCoordinates)
 {
     /* Note: example code, potentially not portable across machines. */
-    std::vector<float> fv = {1.0, 2.0, 8.88, 765.88989};
+    //std::vector<float> fv = {1.0, 2.0, 8.88, 765.88989};
+    std::vector<float> fv = face_vect();
     const uint8_t* bytes = reinterpret_cast<const uint8_t*>(fv.data());
     int dataSize = sizeof(float) * fv.size();
     templ.resize(dataSize);
     memcpy(templ.data(), bytes, dataSize);
 
     for (unsigned int i = 0; i < faces.size(); i++) {
-        eyeCoordinates.push_back(EyePair(true, true, i, i, i+1, i+1));
+        int *ptr;
+        ptr = eye_coords(faces[i]);
+        bool tempIsLeftAssigned = false;
+        bool tempIsRightAssigned = false;
+        if(ptr != nullptr){
+            tempIsLeftAssigned = true;
+            tempIsLeftAssigned = true;
+        }
+        //eyeCoordinates.push_back(EyePair(true, true, i, i, i+1, i+1));
+        eyeCoordinates.push_back(EyePair(tempIsLeftAssigned,
+                                         tempIsLeftAssigned,
+                                         ptr[0],
+                                         ptr[1],
+                                         ptr[2],
+                                         ptr[3]));
     }
 
     return ReturnStatus(ReturnCode::Success);
@@ -89,7 +106,7 @@ NullImplFRVT11::matchTemplates(
     }
     */
 
-    similarity = rand() % 1000 + 1;
+    similarity = vectors_distance(verifTemplate, enrollTemplate);
     return ReturnStatus(ReturnCode::Success);
 }
 
